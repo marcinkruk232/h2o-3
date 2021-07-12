@@ -1,4 +1,4 @@
-package hex.infogram;
+package infogram;
 
 import hex.Model;
 import hex.ModelBuilder;
@@ -6,6 +6,8 @@ import hex.ModelMetrics;
 import hex.SplitFrame;
 import hex.deeplearning.DeepLearningModel;
 import hex.glm.GLMModel;
+import infogram.EstimateCMI;
+import infogram.InfoGramModel;
 import hex.schemas.DRFV3;
 import hex.schemas.DeepLearningV3;
 import hex.schemas.GBMV3;
@@ -19,22 +21,22 @@ import water.api.schemas3.ModelParametersSchemaV3;
 import water.fvec.Frame;
 import water.util.TwoDimTable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.DoubleStream;
 
-import static hex.infogram.InfoGramModel.InfoGramParameter;
-import static hex.infogram.InfoGramModel.InfoGramParameter.Algorithm;
 public class InfoGramUtils {
-  
+
   /**
    * This method will take the columns of _parms.train().  It will then remove the response, any columns in 
    * _parms._sensitive_attributes from the columns of _parms.train(), weights_column, offset_column.  Then, the 
    * columns that are left are the columns that are eligible to get their InfoGram.
-   * 
+   *
    * @param _parms
    * @return
    */
-  public static String[] extractPredictors(InfoGramParameter _parms) {
+  public static String[] extractPredictors(InfoGramModel.InfoGramParameter _parms) {
     List<String> colNames = new ArrayList<>(Arrays.asList(_parms.train().names()));
     List<String> excludeCols = new ArrayList<>(Arrays.asList(_parms._response_column));
     if (!(_parms._sensitive_attributes == null))
@@ -45,7 +47,7 @@ public class InfoGramUtils {
       excludeCols.add(_parms._offset_column);  // remove offset
     if (_parms._ignored_columns != null)
       excludeCols.addAll(Arrays.asList(_parms._ignored_columns));
-    
+
     colNames.removeAll(excludeCols);  // remove sensitive attributes, response, weight/offset columns
     return colNames.toArray(new String[colNames.size()]);
   }
@@ -57,7 +59,7 @@ public class InfoGramUtils {
    * @param eligiblePredictors
    * @return
    */
-  public static String[] extractTopKPredictors(InfoGramParameter parms, Frame trainFrame, String[] eligiblePredictors) {
+  public static String[] extractTopKPredictors(InfoGramModel.InfoGramParameter parms, Frame trainFrame, String[] eligiblePredictors) {
     if (parms._ntop >= eligiblePredictors.length) return eligiblePredictors;
     Frame topTrain = extractTrainingFrame(parms, eligiblePredictors, 1, trainFrame);
     Scope.track(topTrain);
@@ -71,8 +73,8 @@ public class InfoGramUtils {
     System.arraycopy(rowHeaders, 0, ntopPredictors, 0, parms._ntop);
     return ntopPredictors;
   }
-  
-  public static TwoDimTable extractVarImp(Algorithm algo, Model model) {
+
+  public static TwoDimTable extractVarImp(InfoGramModel.InfoGramParameter.Algorithm algo, Model model) {
     switch (algo) {
       case gbm : return ((GBMModel) model)._output._variable_importances;
       case glm : return ((GLMModel) model)._output._variable_importances;
@@ -91,13 +93,13 @@ public class InfoGramUtils {
    * @param parms
    * @param sensitivePredictors
    * @param dataFraction
-   * @param 
+   * @param
    * @return
    */
-  public static Frame extractTrainingFrame(InfoGramParameter parms, String[] sensitivePredictors, double dataFraction, 
+  public static Frame extractTrainingFrame(InfoGramModel.InfoGramParameter parms, String[] sensitivePredictors, double dataFraction,
                                            Frame trainFrame) {
     if (dataFraction < 1) {  // only use a fraction training data for speedup
-      SplitFrame sf = new SplitFrame(trainFrame, new double[]{parms._data_fraction, 1-parms._data_fraction}, 
+      SplitFrame sf = new SplitFrame(trainFrame, new double[]{parms._data_fraction, 1-parms._data_fraction},
               new Key[]{Key.make("train.hex"), Key.make("discard.hex")});
       sf.exec().get();
       Key[] ksplits = sf._destination_frames;
@@ -120,12 +122,12 @@ public class InfoGramUtils {
     DKV.put(extractedFrame);
     return extractedFrame;
   }
-  
-  public static void buildAlgorithmParameters(InfoGramParameter parms) {
-    
+
+  public static void buildAlgorithmParameters(InfoGramModel.InfoGramParameter parms) {
+
   }
-  
-  public static void copyAlgoParams(ModelBuilder builder, InfoGramParameter parms) {
+
+  public static void copyAlgoParams(ModelBuilder builder, InfoGramModel.InfoGramParameter parms) {
     String inputAlgoName = parms._infogram_algorithm.name();
     String algoName = ModelBuilder.algoName(inputAlgoName);
     String schemaDir = ModelBuilder.schemaDirectory(inputAlgoName);
@@ -133,7 +135,7 @@ public class InfoGramUtils {
     if (algoName.equals("SVD") || algoName.equals("Aggregator") || algoName.equals("StackedEnsemble")) algoVersion=99;
     String paramSchemaName = schemaDir+algoName+"V"+algoVersion+"$"+ModelBuilder.paramName(inputAlgoName)+"V"+algoVersion;
   }
-  
+
   public static String[] generateModelDescription(String[] topKPredictors, String[] sensitive_attributes) {
     int numModel = topKPredictors.length+1;
     String[] modelNames = new String[numModel];
@@ -149,7 +151,7 @@ public class InfoGramUtils {
     }
     return modelNames;
   }
-  
+
   public static Frame[] buildTrainingFrames(String[] topKPredictors, Frame trainingFrame, Frame baseFrame,
                                             int startInd, int numFrames, boolean buildCore, int lastModelInd) {
     Frame[] trainingFrames = new Frame[numFrames];
@@ -174,8 +176,8 @@ public class InfoGramUtils {
     return trainingFrames;
   }
 
-  public static Model.Parameters[] buildModelParameters(Frame[] trainingFrames, Model.Parameters infoParams, 
-                                                        int numModels, Algorithm algoName) {
+  public static Model.Parameters[] buildModelParameters(Frame[] trainingFrames, Model.Parameters infoParams,
+                                                        int numModels, InfoGramModel.InfoGramParameter.Algorithm algoName) {
     ModelParametersSchemaV3 paramsSchema;
     switch (algoName) {
       case glm:
@@ -200,7 +202,7 @@ public class InfoGramUtils {
     }
     return modelParams;
   }
-  
+
   public static ModelBuilder[] buildModelBuilders(Model.Parameters[] modelParams) {
     int numModel = modelParams.length;
     ModelBuilder[] modelBuilders = new ModelBuilder[numModel];
@@ -229,7 +231,7 @@ public class InfoGramUtils {
         cmiRaw[index] = Math.max(0, cmiRaw[lastInd] - cmiRaw[index]);
       else
         cmiRaw[index] = Math.max(0, cmiRaw[index] - cmiRaw[lastInd]);
-      
+
       if (cmiRaw[index] > maxCMI)
         maxCMI = cmiRaw[index];
     }
@@ -237,9 +239,9 @@ public class InfoGramUtils {
     double[] cmi = new double[lastInd];
     double[] cmiLong = DoubleStream.of(cmiRaw).map(d->d*scale).toArray();
     System.arraycopy(cmiLong, 0, cmi, 0, lastInd);
-    return cmi;   
+    return cmi;
   }
-  
+
   public static Frame subtractAdd2Frame(Frame base, Frame featureFrame, String[] removeFeatures, String[] addFeatures) {
     Frame newFrame = new Frame(base);
     if (removeFeatures != null) {
@@ -251,10 +253,10 @@ public class InfoGramUtils {
     DKV.put(newFrame);
     return newFrame;
   }
-  
-  public static void fillModelMetrics(Model model, Model finalModel, Frame trainingFrame, Algorithm  algo_name) {
+
+  public static void fillModelMetrics(Model model, Model finalModel, Frame trainingFrame, InfoGramModel.InfoGramParameter.Algorithm algo_name) {
     model._output._training_metrics = finalModel._output._training_metrics;
-    for (Key<ModelMetrics> modelMetricsKey : finalModel._output.getModelMetrics()) 
+    for (Key<ModelMetrics> modelMetricsKey : finalModel._output.getModelMetrics())
       model.addModelMetrics(modelMetricsKey.get().deepCloneWithDifferentModelAndFrame(finalModel, trainingFrame));
     model._output._scoring_history = copyTwoDimTable(finalModel._output._scoring_history, "Scoring history of "+
             algo_name +" final model");

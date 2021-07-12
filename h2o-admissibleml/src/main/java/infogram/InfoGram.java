@@ -1,4 +1,4 @@
-package hex.infogram;
+package infogram;
 
 import hex.Model;
 import hex.ModelBuilder;
@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static hex.gam.MatrixFrameUtils.GamUtils.keepFrameKeys;
-import static hex.infogram.InfoGramUtils.*;
+import static infogram.InfoGramUtils.*;
 
 public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGramParameter,
         InfoGramModel.InfoGramOutput> {

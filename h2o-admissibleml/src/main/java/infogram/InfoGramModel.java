@@ -1,16 +1,14 @@
-package hex.infogram;
+package infogram;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import hex.*;
 import hex.deeplearning.DeepLearningModel;
 import hex.genmodel.utils.DistributionFamily;
-import hex.schemas.DRFV3;
-import hex.schemas.DeepLearningV3;
-import hex.schemas.GBMV3;
-import hex.schemas.GLMV3;
+import hex.schemas.*;
 import hex.tree.drf.DRFModel;
 import hex.tree.gbm.GBMModel;
+import hex.tree.xgboost.XGBoostModel;
 import water.*;
 import water.api.schemas3.ModelParametersSchemaV3;
 import water.fvec.Frame;
@@ -26,7 +24,6 @@ import static hex.genmodel.utils.DistributionFamily.bernoulli;
 import static hex.genmodel.utils.DistributionFamily.multinomial;
 import static hex.glm.GLMModel.GLMParameters;
 import static hex.glm.GLMModel.GLMParameters.Family.binomial;
-import static hex.infogram.InfoGramModel.InfoGramParameter.Algorithm.glm;
 import static water.util.ArrayUtils.sort;
 
 public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramParameter, InfoGramModel.InfoGramOutput> {
@@ -53,7 +50,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
         throw H2O.unimpl("Invalid ModelCateory "+_output.getModelCategory());
     }
   }
-  
+
   @Override
   protected double[] score0(double[] data, double[] preds) {
     throw new UnsupportedOperationException("InfoGram does not support scoring on data.  It only provides information" +
@@ -67,7 +64,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
             " on predictors and choose admissible features for users.  Users can take the admissible features, build" +
             "their own model and score with that model.");
   }
-  
+
   public static class InfoGramParameter extends Model.Parameters {
     public Algorithm _infogram_algorithm = Algorithm.gbm;     // default to GBM
     public String _infogram_algorithm_params = new String();   // store user specific parameters for chosen algorithm
@@ -82,14 +79,15 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
     public int _ntop = 50;                           // if 0 consider all predictors, otherwise, consider topk predictors
     public boolean _pval = false;                   // if true, will calculate p-value
     public int _parallelism;                        // how many models to build in parallel
-    
+
     public enum Algorithm {
       deeplearning,
       drf,
       gbm,
-      glm
+      glm,
+      xgboost
     }
-    
+
     @Override
     public String algoName() {
       return "InfoGram";
@@ -135,12 +133,12 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
         fillParams = _infogram_algorithm_params != null && !_infogram_algorithm_params.isEmpty();
       else
         fillParams = _model_algorithm_params != null && !_model_algorithm_params.isEmpty();
-      
+
       if (fillParams) { // only execute when algorithm specific parameters are filled in by user
         HashMap<String, String[]> map = fillInfoGram ?
                 new Gson().fromJson(_infogram_algorithm_params, new TypeToken<HashMap<String, String[]>>() {}.getType()):
                 new Gson().fromJson(_model_algorithm_params, new TypeToken<HashMap<String, String[]>>() {
-        }.getType());
+                }.getType());
         for (Map.Entry<String, String[]> param : map.entrySet()) {
           String[] paramVal = param.getValue();
           String paramName = param.getKey();
@@ -152,7 +150,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
           }
         }
       }
-      
+
       ModelParametersSchemaV3 paramsSchema;
       Model.Parameters params;
       Algorithm algoName = fillInfoGram ? _infogram_algorithm : _model_algorithm;
@@ -161,7 +159,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
           paramsSchema = new GLMV3.GLMParametersV3();
           params = new GLMParameters();
           excludeList.add("_distribution");
-  //        ((GLMParameters) params)._family = null;
+          //        ((GLMParameters) params)._family = null;
           break;
         case gbm:
           paramsSchema = new GBMV3.GBMParametersV3();
@@ -183,6 +181,9 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
           paramsSchema = new DeepLearningV3.DeepLearningParametersV3();
           params = new DeepLearningModel.DeepLearningParameters();
           break;
+        case xgboost:
+          paramsSchema = new XGBoostV3.XGBoostParametersV3();
+          params = new XGBoostModel.XGBoostParameters();
         default:
           throw new UnsupportedOperationException("Unknown algo: " + algoName);
       }
@@ -221,7 +222,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
       }
     }
   }
-  
+
   public static class InfoGramOutput extends Model.Output {
     public double[] _admissible_cmi;  // conditional info for admissible features in _admissible_features
     public double[] _admissible_relevance;  // varimp values for admissible features in _admissible_features
@@ -234,7 +235,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
     public String _cmi_relevance_key;
     public Key<Frame> _cmiRelKey;
     public String[] _topKFeatures;
-    
+
     @Override
     public ModelCategory getModelCategory() {
       if (bernoulli.equals(_distribution)) {
@@ -244,20 +245,20 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
       }
       throw new IllegalArgumentException("InfoGram currently only support binomial and multinomial classification");
     }
-    
-    public InfoGramOutput(InfoGram b) { 
+
+    public InfoGramOutput(InfoGram b) {
       super(b);
       if (glm.equals(b._parms._infogram_algorithm)) {
         if (binomial.equals(((GLMParameters) b._parms._infogram_algorithm_parameters)._family))
           _distribution = bernoulli;
         else if (multinomial.equals(((GLMParameters) b._parms._infogram_algorithm_parameters)._family))
-            _distribution = multinomial;
+          _distribution = multinomial;
       } else {
         _distribution = b._parms._infogram_algorithm_parameters._distribution;
       }
     }
 
-    public void extractAdmissibleFeatures(TwoDimTable varImp, String[] topKPredictors, double[] cmi, 
+    public void extractAdmissibleFeatures(TwoDimTable varImp, String[] topKPredictors, double[] cmi,
                                           double cmiThreshold, double varImpThreshold) {
       int numRows = varImp.getRowDim();
       List<Double> varimps = new ArrayList<>();
@@ -286,16 +287,16 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
       Vec vName = Vec.makeVec(_all_predictor_names, vg.addVec());
       Vec vCMI = Vec.makeVec(_cmi_normalize, vg.addVec());
       Vec vRel = Vec.makeVec(_relevance, vg.addVec());
-      Frame cmiRelFrame = new Frame(Key.<Frame>make(), new String[]{"Features", "CMI", "Relevance"}, 
+      Frame cmiRelFrame = new Frame(Key.<Frame>make(), new String[]{"Features", "CMI", "Relevance"},
               new Vec[]{vName, vCMI, vRel});
       DKV.put(cmiRelFrame);
       _cmiRelKey = cmiRelFrame._key;
       _cmi_relevance_key = _cmiRelKey.toString();
       return cmiRelFrame._key;
-      
+
     }
-    public void copyCMIRelevance( double[] cmiRaw, double[] cmi, String[] topKPredictors, 
-                                        TwoDimTable varImp) {
+    public void copyCMIRelevance( double[] cmiRaw, double[] cmi, String[] topKPredictors,
+                                  TwoDimTable varImp) {
       _cmi_raw = new double[cmi.length];
       System.arraycopy(cmiRaw, 0, _cmi_raw, 0, _cmi_raw.length);
       double[] distanceFromCorner = new double[cmi.length];
@@ -339,24 +340,25 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
       _all_predictor_names = predNames;
     }
   }
-  
+
 
   @Override
   protected Futures remove_impl(Futures fs, boolean cascade) {
     super.remove_impl(fs, cascade);
     Keyed.remove(_output._cmiRelKey, fs, true);
-    return fs;        
+    return fs;
   }
-  
+
   @Override
   protected AutoBuffer writeAll_impl(AutoBuffer ab) {
     if (_output._cmiRelKey != null)
       ab.putKey(_output._cmiRelKey);
     return super.writeAll_impl(ab);
   }
-  
+
   @Override
   protected Keyed readAll_impl(AutoBuffer ab, Futures fs) {
     return super.readAll_impl(ab, fs);
   }
 }
+

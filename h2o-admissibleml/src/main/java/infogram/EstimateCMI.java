@@ -1,4 +1,4 @@
-package hex.infogram;
+package infogram;
 
 import water.MRTask;
 import water.fvec.Chunk;
@@ -10,12 +10,12 @@ public class EstimateCMI extends MRTask<EstimateCMI> {
   public double _meanCMI;
   public final double _scale = 1.0/Math.log(2);
   public final int _responseColumn;
-  
+
   public EstimateCMI(Frame fr) {
     _meanCMI = 0.0;
     _responseColumn = fr.numCols()-1;
   }
-  
+
   @Override
   public void map(Chunk[] ck) {
     _nonZeroRows = 0;
@@ -30,15 +30,16 @@ public class EstimateCMI extends MRTask<EstimateCMI> {
       }
     }
   }
-  
+
   @Override
   public void reduce(EstimateCMI other) {
     _nonZeroRows += other._nonZeroRows;
     _accumulatedCMI += other._accumulatedCMI;
   }
 
-  @Override 
+  @Override
   public void postGlobal() {
     _meanCMI = _accumulatedCMI/_nonZeroRows;
   }
 }
+

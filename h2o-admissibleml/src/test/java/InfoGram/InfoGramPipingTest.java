@@ -1,27 +1,29 @@
-package hex.infogram;
+package InfoGram;
 
-import org.junit.BeforeClass;
+import infogram.InfoGramModel;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import water.DKV;
 import water.Scope;
 import water.TestUtil;
 import water.fvec.Frame;
 import water.fvec.Vec;
 import water.parser.ParseSetup;
+import water.runner.CloudSize;
+import water.runner.H2ORunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static hex.DMatrix.transpose;
-import static hex.infogram.InfoGramModel.InfoGramParameter;
-import static hex.infogram.InfoGramModel.InfoGramParameter.Algorithm;
 import static org.junit.Assert.assertEquals;
 
+@RunWith(H2ORunner.class)
+@CloudSize(1)
 public class InfoGramPipingTest extends TestUtil {
   public static final double TOLERANCE = 1e-6;
-  @BeforeClass public static void setup() { stall_till_cloudsize(1); }
-  
+
   // Deep example 9
   @Test
   public void testIris() {
@@ -31,10 +33,10 @@ public class InfoGramPipingTest extends TestUtil {
       double[] deepCMI = new double[]{0.1038524, 0.7135458, 0.5745915, 1.0000000};
       Frame trainF = parseTestFile("smalldata/admissibleml_test/irisROriginal.csv");
       Scope.track(trainF);
-      InfoGramParameter params = new InfoGramParameter();
+      InfoGramModel.InfoGramParameter params = new InfoGramModel.InfoGramParameter();
       params._response_column = "Species";
       params._train = trainF._key;
-      params._infogram_algorithm = Algorithm.gbm;
+      params._infogram_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
       params._seed = 12345;
 
       InfoGramModel infogramModel = new InfoGram(params).trainModel().get();
@@ -48,25 +50,25 @@ public class InfoGramPipingTest extends TestUtil {
       Scope.exit();
     }
   }
-  
+
   // Deep example 5
   @Test
   public void testGermanData() {
     try {
       Scope.enter();
-      double[] deepRel = new double[]{1.00000000, 0.58302027, 0.43431236, 0.66177924, 0.53677082, 0.25084764, 
-              0.34379833, 0.13251726, 0.11473028, 0.09548423, 0.20398740, 0.16432640, 0.06875276, 0.04870468, 
+      double[] deepRel = new double[]{1.00000000, 0.58302027, 0.43431236, 0.66177924, 0.53677082, 0.25084764,
+              0.34379833, 0.13251726, 0.11473028, 0.09548423, 0.20398740, 0.16432640, 0.06875276, 0.04870468,
               0.12573930, 0.01382682, 0.04496173, 0.01273963};
-      double[] deepCMI = new double[]{0.84946975, 0.73020930, 0.58553936, 0.75780528, 1.00000000, 0.38461582, 
-              0.57575695, 0.30663930, 0.07604779, 0.19979514, 0.42293369, 0.20628365, 0.25316918, 0.15096705, 
+      double[] deepCMI = new double[]{0.84946975, 0.73020930, 0.58553936, 0.75780528, 1.00000000, 0.38461582,
+              0.57575695, 0.30663930, 0.07604779, 0.19979514, 0.42293369, 0.20628365, 0.25316918, 0.15096705,
               0.24501686, 0.11296778, 0.13068605, 0.03841617};
       Frame trainF = parseTestFile("smalldata/admissibleml_test/german_credit.csv");
-      InfoGramParameter params = new InfoGramParameter();
+      InfoGramModel.InfoGramParameter params = new InfoGramModel.InfoGramParameter();
       params._response_column = "BAD";
       trainF.replace(trainF.numCols()-1, trainF.vec(params._response_column).toCategoricalVec()).remove();
       DKV.put(trainF);
       params._train = trainF._key;
-      params._infogram_algorithm = Algorithm.gbm;
+      params._infogram_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
       params._sensitive_attributes = new String[]{"status_gender", "age"};
       params._ntop = 50;
       Scope.track(trainF);
@@ -88,7 +90,7 @@ public class InfoGramPipingTest extends TestUtil {
   public void testUCICredit() {
     try {
       Scope.enter();
-      List<String> predictorNames = new ArrayList<>(Arrays.asList("X1","X3","X4","X6","X7","X8","X9","X10","X11","X12", 
+      List<String> predictorNames = new ArrayList<>(Arrays.asList("X1","X3","X4","X6","X7","X8","X9","X10","X11","X12",
               "X13","X14","X15","X16","X17","X18","X19","X20","X21","X22","X23"));
       double[] deepCMI = new double[]{0.39946282, 0.05979470, 0.03750023, 0.92207648, 0.60110485, 0.47026827,
               0.42284063, 0.38576886, 0.34166255, 1.00000000, 0.71440922, 0.84539821, 0.73648997, 0.80649469,
@@ -103,14 +105,14 @@ public class InfoGramPipingTest extends TestUtil {
       for (int cInd = 0; cInd < ncol; cInd++) {
         trainF.replace(cInd, trainF.vec(cInd).toCategoricalVec()).remove();
       }
-      InfoGramParameter params = new InfoGramParameter();
+      InfoGramModel.InfoGramParameter params = new InfoGramModel.InfoGramParameter();
       params._response_column = "Y";
       Scope.track(trainF.remove(0));
       DKV.put(trainF);
       Scope.track(trainF);
       params._train = trainF._key;
-      params._infogram_algorithm = Algorithm.gbm;
-      params._model_algorithm = Algorithm.gbm;
+      params._infogram_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
+      params._model_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
       params._seed = 12345;
       params._sensitive_attributes = new String[]{"X2", "X5"};
 
@@ -127,20 +129,20 @@ public class InfoGramPipingTest extends TestUtil {
   public void testProstateWide() {
     try {
       Scope.enter();
-      double[] deepCMI = new double[]{1.000000000, 0.416069511, 0.685096529, 0.507368744, 0.000000000, 0.575576639, 
-              0.000000000, 0.000000000, 0.271674757, 0.248421424, 0.474729852, 0.000000000, 0.000000000, 0.000000000, 
-              0.018534010, 0.036368120, 0.000000000, 0.184383526, 0.316296264, 0.239501471, 0.000000000, 0.000000000, 
+      double[] deepCMI = new double[]{1.000000000, 0.416069511, 0.685096529, 0.507368744, 0.000000000, 0.575576639,
+              0.000000000, 0.000000000, 0.271674757, 0.248421424, 0.474729852, 0.000000000, 0.000000000, 0.000000000,
+              0.018534010, 0.036368120, 0.000000000, 0.184383526, 0.316296264, 0.239501471, 0.000000000, 0.000000000,
               0.058800272, 0.000000000, 0.073573180, 0.396318927, 0.267592247, 0.000000000, 0.000000000, 0.000000000,
-              0.000000000, 0.041711020, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.002055904, 
-              0.000000000, 0.000000000, 0.000000000, 0.090010963, 0.048595528, 0.080272375, 0.004002294, 0.000000000, 
+              0.000000000, 0.041711020, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.002055904,
+              0.000000000, 0.000000000, 0.000000000, 0.090010963, 0.048595528, 0.080272375, 0.004002294, 0.000000000,
               0.061638596, 0.000000000, 0.087287940, 0.062288766};
       double[] deepRel = new double[]{1.000000e+00, 6.486737e-01, 4.947306e-01, 3.642898e-01, 1.932296e-01,
               1.748593e-01, 1.067082e-01, 9.285556e-02, 9.007357e-02, 6.817226e-02, 5.514745e-02, 5.039264e-02,
-              4.741128e-02, 4.188043e-02, 4.024860e-02, 3.019085e-02, 2.663353e-02, 2.570307e-02, 2.379470e-02, 
-              2.220692e-02, 2.044017e-02, 1.524100e-02, 1.663565e-02, 1.111248e-02, 7.832062e-03, 6.588439e-03, 
-              5.934081e-03, 3.756785e-03, 1.789985e-03, 2.941161e-03, 4.941466e-05, 2.269027e-03, 2.224223e-03, 
-              1.902141e-03, 2.644488e-06, 8.339014e-04, 1.352506e-03, 1.371541e-03, 1.290422e-03, 7.044505e-04, 
-              1.499066e-03, 2.239000e-04, 6.416308e-04, 7.102487e-04, 1.212104e-03, 5.354030e-04, 5.900479e-04, 
+              4.741128e-02, 4.188043e-02, 4.024860e-02, 3.019085e-02, 2.663353e-02, 2.570307e-02, 2.379470e-02,
+              2.220692e-02, 2.044017e-02, 1.524100e-02, 1.663565e-02, 1.111248e-02, 7.832062e-03, 6.588439e-03,
+              5.934081e-03, 3.756785e-03, 1.789985e-03, 2.941161e-03, 4.941466e-05, 2.269027e-03, 2.224223e-03,
+              1.902141e-03, 2.644488e-06, 8.339014e-04, 1.352506e-03, 1.371541e-03, 1.290422e-03, 7.044505e-04,
+              1.499066e-03, 2.239000e-04, 6.416308e-04, 7.102487e-04, 1.212104e-03, 5.354030e-04, 5.900479e-04,
               6.537474e-04, 5.808857e-04, 3.335511e-04};
       Frame trainF = Scope.track(parseTestFile("smalldata/admissibleml_test/prostmat.csv"));
       Frame transposeF = new Frame(transpose(trainF));
@@ -153,10 +155,10 @@ public class InfoGramPipingTest extends TestUtil {
       transposeF.replace(transposeF.numCols()-1, transposeF.vec("y").toCategoricalVec()).remove();
       Scope.track(transposeF);
       DKV.put(transposeF);
-      InfoGramParameter params = new InfoGramParameter();
+      InfoGramModel.InfoGramParameter params = new InfoGramModel.InfoGramParameter();
       params._response_column = "y";
       params._train = transposeF._key;
-      params._infogram_algorithm = Algorithm.gbm;
+      params._infogram_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
       params._ntop = 50;
       params._seed = 12345;
 
@@ -174,20 +176,20 @@ public class InfoGramPipingTest extends TestUtil {
   public void testCompasScores2years() {
     try {
       Scope.enter();
-      double[] deepCMI = new double[]{0.008011609, 0.138541125, 0.013504090,0.016311791, 0.181746765, 0.046041515, 
+      double[] deepCMI = new double[]{0.008011609, 0.138541125, 0.013504090,0.016311791, 0.181746765, 0.046041515,
               0.017965106, 0.138541125, 0.107449216, 0.082824953, 0.050455340, 0.181746765, 0.050691145, 1.000000000,
               0.858833177};
-      double[] deepRel = new double[]{0.0013904297, 0.0167956478, 0.0022520089, 0.0014052132, 0.0104887361, 
-              0.0041130581, 0.0012933420, 0.0000000000, 0.0018857971, 0.0040163313, 0.0002574921, 0.0000000000, 
+      double[] deepRel = new double[]{0.0013904297, 0.0167956478, 0.0022520089, 0.0014052132, 0.0104887361,
+              0.0041130581, 0.0012933420, 0.0000000000, 0.0018857971, 0.0040163313, 0.0002574921, 0.0000000000,
               0.0145265544, 1.0000000000, 0.2223278895};
       Frame trainF = Scope.track(parseTestFile("smalldata/admissibleml_test/compas_full.csv"));
       trainF.replace(trainF.numCols()-1, trainF.vec("two_year_recid").toCategoricalVec()).remove();
       DKV.put(trainF);
-      InfoGramParameter params = new InfoGramParameter();
+      InfoGramModel.InfoGramParameter params = new InfoGramModel.InfoGramParameter();
       params._response_column = "two_year_recid";
       params._train = trainF._key;
       params._sensitive_attributes = new String[]{"sex","age","race"};
-      params._infogram_algorithm = Algorithm.gbm;
+      params._infogram_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
       params._ignored_columns = new String[]{"id"};
       params._ntop = 50;
       params._seed = 12345;
@@ -207,29 +209,29 @@ public class InfoGramPipingTest extends TestUtil {
     try {
       Scope.enter();
       String[] colNames = new String[]{"diagnosis", "radius_mean", "texture_mean", "perimeter_mean", "area_mean",
-              "smoothness_mean", "compactness_mean", "concavity_mean", "concave_points_mean", "symmetry_mean", 
-              "fractal_dimension_mean", "radius_se", "texture_se", "perimeter_se", "area_se", "smoothness_se", 
-              "compactness_se", "concavity_se", "concave_points_se", "symmetry_se", "fractal_dimension_se", 
-              "radius_worst", "texture_worst", "perimeter_worst", "area_worst", "smoothness_worst", "compactness_worst", 
+              "smoothness_mean", "compactness_mean", "concavity_mean", "concave_points_mean", "symmetry_mean",
+              "fractal_dimension_mean", "radius_se", "texture_se", "perimeter_se", "area_se", "smoothness_se",
+              "compactness_se", "concavity_se", "concave_points_se", "symmetry_se", "fractal_dimension_se",
+              "radius_worst", "texture_worst", "perimeter_worst", "area_worst", "smoothness_worst", "compactness_worst",
               "concavity_worst", "concave_points_worst", "symmetry_worst", "fractal_dimension_worst"};
-      double[] deepCMI = new double[]{0.00000000, 0.31823883, 0.52769230, 0.00000000, 0.00000000, 0.00000000, 
-              0.01183309, 0.67430653, 0.00000000, 0.00000000, 0.45443221, 0.00000000, 0.24561013, 0.87720587, 
-              0.31939378, 0.19370515, 0.00000000, 0.16463918, 0.00000000, 0.00000000, 0.44830772, 1.00000000, 
+      double[] deepCMI = new double[]{0.00000000, 0.31823883, 0.52769230, 0.00000000, 0.00000000, 0.00000000,
+              0.01183309, 0.67430653, 0.00000000, 0.00000000, 0.45443221, 0.00000000, 0.24561013, 0.87720587,
+              0.31939378, 0.19370515, 0.00000000, 0.16463918, 0.00000000, 0.00000000, 0.44830772, 1.00000000,
               0.00000000, 0.00000000, 0.62478098, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.64466111};
-      double[] deepRel = new double[]{0.0040477989, 0.0974455315, 0.0086303713, 0.0041002103, 0.0037914745, 
+      double[] deepRel = new double[]{0.0040477989, 0.0974455315, 0.0086303713, 0.0041002103, 0.0037914745,
               0.0036801151, 0.0257819346, 0.2808010416, 0.0005372569, 0.0036280018, 0.0032444598, 0.0002943119,
-              0.0026430897, 0.0262074332, 0.0033317064, 0.0068812603, 0.0006185385, 0.0082121491, 0.0014562177, 
-              0.0081786997, 1.0000000000, 0.0894895310, 0.6187801784, 0.3302352775, 0.0021346433, 0.0016077771, 
+              0.0026430897, 0.0262074332, 0.0033317064, 0.0068812603, 0.0006185385, 0.0082121491, 0.0014562177,
+              0.0081786997, 1.0000000000, 0.0894895310, 0.6187801784, 0.3302352775, 0.0021346433, 0.0016077771,
               0.0260198502, 0.3404628948, 0.0041384517, 0.0019399743};
       List<Integer> excludeIndex = new ArrayList<>(Arrays.asList(7, 12, 24, 29)); // frames with different predictor order gives different answers with GBM
       Frame trainF = Scope.track(parseTestFile("smalldata/admissibleml_test/wdbc_changed.csv"));
       trainF.setNames(colNames);
       trainF.replace(0, trainF.vec("diagnosis").toCategoricalVec()).remove();
       DKV.put(trainF);
-      InfoGramParameter params = new InfoGramParameter();
+      InfoGramModel.InfoGramParameter params = new InfoGramModel.InfoGramParameter();
       params._response_column = "diagnosis";
       params._train = trainF._key;
-      params._infogram_algorithm = Algorithm.gbm;
+      params._infogram_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
       params._ntop = 50;
       params._seed = 12345;
 
@@ -256,11 +258,11 @@ public class InfoGramPipingTest extends TestUtil {
       Frame trainF = Scope.track(parseTestFile("smalldata/admissibleml_test/Bank_Personal_Loan_Modelling.csv"));
       trainF.replace(9, trainF.vec("Personal Loan").toCategoricalVec()).remove();
       DKV.put(trainF);
-      InfoGramParameter params = new InfoGramParameter();
+      InfoGramModel.InfoGramParameter params = new InfoGramModel.InfoGramParameter();
       params._response_column = "Personal Loan";
       params._train = trainF._key;
       params._sensitive_attributes = new String[]{"Age","ZIP Code"};
-      params._infogram_algorithm = Algorithm.gbm;
+      params._infogram_algorithm = InfoGramModel.InfoGramParameter.Algorithm.gbm;
       params._ignored_columns = new String[]{"ID"};
       params._ntop = 50;
       params._seed = 12345;
