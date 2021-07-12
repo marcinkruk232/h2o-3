@@ -1,4 +1,4 @@
-package infogram;
+package hex.InfoGram;
 
 import hex.Model;
 import hex.ModelBuilder;
@@ -16,8 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static hex.InfoGram.InfoGramUtils.*;
 import static hex.gam.MatrixFrameUtils.GamUtils.keepFrameKeys;
-import static infogram.InfoGramUtils.*;
 
 public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGramParameter,
         InfoGramModel.InfoGramOutput> {
@@ -33,17 +33,17 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
   Key<Frame> _cmiRelKey;
 
   public InfoGram(boolean startup_once) { super(new InfoGramModel.InfoGramParameter(), startup_once);}
-  
+
   public InfoGram(InfoGramModel.InfoGramParameter parms) {
     super(parms);
     init(false);
   }
-  
+
   public InfoGram(InfoGramModel.InfoGramParameter parms, Key<InfoGramModel> key) {
     super(parms, key);
     init(false);
   }
-  
+
   @Override
   protected Driver trainModelImpl() {
     return new InfoGramDriver();
@@ -63,21 +63,21 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
   public BuilderVisibility builderVisibility() {
     return BuilderVisibility.Experimental;
   }
-  
+
   @Override
   public void init(boolean expensive) {
     super.init(expensive);
     if (expensive)
       validateInfoGramParameters();
   }
-  
+
   private void validateInfoGramParameters() {
     Frame dataset = Scope.track(_parms.train());
 
     if (!_parms.train().vec(_parms._response_column).isCategorical())
       error("response_column", " only classification is allowed.  Change your response column " +
               "to be categorical before calling InfoGram.");
-    
+
     // make sure sensitive_attributes are true predictor columns
     if (_parms._sensitive_attributes != null) {
       List<String> colNames = Arrays.asList(dataset.names());
@@ -91,11 +91,11 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
     // make sure conditional_info threshold is between 0 and 1
     if (_parms._conditional_info_threshold < 0 || _parms._conditional_info_threshold > 1)
       error("conditional_info_thresold", "conditional info threshold must be between 0 and 1.");
-    
+
     // make sure varimp threshold is between 0 and 1
     if (_parms._varimp_threshold < 0 || _parms._varimp_threshold > 1)
       error("varimp_threshold", "varimp threshold must be between 0 and 1.");
-    
+
     // check top k to be between 0 and training dataset column number
     if (_parms._ntop < 0)
       error("_topk", "topk must be between 0 and the number of predictor columns in your training dataset.");
@@ -110,18 +110,18 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
               "  It will be set to the number of predictors in your training dataset.");
       _parms._ntop = _numPredictors;
     }
-    
+
     if (_parms._nfolds > 1)
       error("nfolds", "please specify nfolds as part of the algorithm specific parameter in " +
               "_info_algorithm_parms or _model_algorithm_parms");
-    
+
     if (_parms._parallelism < 0)
       error("parallelism", "must be >= 0.  If 0, it is adaptive");
-    
+
     if (_parms._parallelism == 0) // adaptively set parallelism
       _parms._parallelism = 2* H2O.NUMCPUS;
   }
-  
+
   private class InfoGramDriver extends Driver {
     void generateBasicFrame() {
       String[] eligiblePredictors = extractPredictors(_parms);  // exclude senstive attributes if applicable
@@ -131,7 +131,7 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
       _parms.fillImpl(false); // copy over model specific parameters for final model
       _topKPredictors = extractTopKPredictors(_parms, _parms.train(), eligiblePredictors); // extract topK predictors
     }
-    
+
     @Override
     public void computeImpl() {
       init(true);
@@ -155,7 +155,7 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
         model._output.copyCMIRelevance(_cmiRaw, _cmi, _topKPredictors, _varImp); // copy over cmi, relevance of all predictors
         _cmi = model._output._cmi_normalize;
         _cmiRelKey = model._output.generateCMIRelFrame();
-        model._output.extractAdmissibleFeatures(_varImp, model._output._all_predictor_names, _cmi, 
+        model._output.extractAdmissibleFeatures(_varImp, model._output._all_predictor_names, _cmi,
                 _parms._conditional_info_threshold, _parms._varimp_threshold);  // extract admissible information model output
         Model finalModel = buildFinalModel(model._output._admissible_features);
         Scope.track_generic(finalModel);
@@ -173,7 +173,7 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
         model.unlock(_job);
       }
     }
-    
+
     private Model buildFinalModel(String[] admissibleFeatures) { // build final model with admissible features only
       Model.Parameters finalParams = _parms._model_algorithm_parameters;
       Frame trainingFrameFinal = extractTrainingFrame(_parms, admissibleFeatures, 1, _parms.train());
@@ -181,12 +181,12 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
       finalParams._train = trainingFrameFinal._key;
       if (_parms._valid != null)
         _parms._model_algorithm_parameters._valid = extractTrainingFrame(_parms, admissibleFeatures,
-                1, _parms.valid()).getKey(); 
-      
+                1, _parms.valid()).getKey();
+
       ModelBuilder builder = ModelBuilder.make(finalParams);
       return (Model) builder.trainModel().get();
     }
-    
+
     private void buildInfoGramsNRelevance() {
       int outerLoop = (int) Math.floor(_numModels/_parms._parallelism); // last model is build special
       int modelCount = 0;
@@ -202,7 +202,7 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
         buildModelCMINRelevance(modelCount, leftOver, lastModelInd);
       _cmi = calculateFinalCMI(_cmiRaw, _buildCore);  // scale cmi to be from 0 to 1, ignore last one
     }
-    
+
     private void buildModelCMINRelevance(int modelCount, int numModel, int lastModelInd) {
       boolean lastModelIndcluded = (modelCount+numModel >= lastModelInd);
       Frame[] trainingFrames = buildTrainingFrames(_topKPredictors, _parms.train(), _baseOrSensitiveFrame, modelCount,
@@ -220,7 +220,7 @@ public class InfoGram extends ModelBuilder<InfoGramModel, InfoGramModel.InfoGram
       if (_buildCore) { // full model is last one, just extract varImp
         _varImp = extractVarImp(_parms._infogram_algorithm, model);
       } else {  // need to build model for fair info grame
-        Frame fullFrame = subtractAdd2Frame(_baseOrSensitiveFrame, _parms.train(), _parms._sensitive_attributes, 
+        Frame fullFrame = subtractAdd2Frame(_baseOrSensitiveFrame, _parms.train(), _parms._sensitive_attributes,
                 _topKPredictors); // training frame is topKPredictors minus sensitive_attributes
         parms._train = fullFrame._key;
         Scope.track(fullFrame);

@@ -1,4 +1,4 @@
-package infogram;
+package hex.InfoGram;
 
 import hex.Model;
 import hex.ModelBuilder;
@@ -6,8 +6,6 @@ import hex.ModelMetrics;
 import hex.SplitFrame;
 import hex.deeplearning.DeepLearningModel;
 import hex.glm.GLMModel;
-import infogram.EstimateCMI;
-import infogram.InfoGramModel;
 import hex.schemas.DRFV3;
 import hex.schemas.DeepLearningV3;
 import hex.schemas.GBMV3;

@@ -1,10 +1,11 @@
-package infogram;
+package hex.InfoGram;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import hex.*;
 import hex.deeplearning.DeepLearningModel;
 import hex.genmodel.utils.DistributionFamily;
+import hex.glm.GLMModel;
 import hex.schemas.*;
 import hex.tree.drf.DRFModel;
 import hex.tree.gbm.GBMModel;
@@ -20,9 +21,9 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.IntStream;
 
+import static hex.InfoGram.InfoGramModel.InfoGramParameter.Algorithm.glm;
 import static hex.genmodel.utils.DistributionFamily.bernoulli;
 import static hex.genmodel.utils.DistributionFamily.multinomial;
-import static hex.glm.GLMModel.GLMParameters;
 import static hex.glm.GLMModel.GLMParameters.Family.binomial;
 import static water.util.ArrayUtils.sort;
 
@@ -34,7 +35,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
    * @param parms
    * @param output
    */
-  public InfoGramModel(Key<InfoGramModel> selfKey, InfoGramParameter parms, InfoGramOutput output) {
+  public InfoGramModel(Key<InfoGramModel> selfKey, InfoGramModel.InfoGramParameter parms, InfoGramModel.InfoGramOutput output) {
     super(selfKey, parms, output);
   }
 
@@ -157,7 +158,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
       switch (algoName) {
         case glm:
           paramsSchema = new GLMV3.GLMParametersV3();
-          params = new GLMParameters();
+          params = new GLMModel.GLMParameters();
           excludeList.add("_distribution");
           //        ((GLMParameters) params)._family = null;
           break;
@@ -204,7 +205,7 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
     }
 
     public void copyInfoGramParams(boolean fillInfoGram, List<String> excludeList) {
-      Field[] algoParams = Parameters.class.getDeclaredFields();
+      Field[] algoParams = Model.Parameters.class.getDeclaredFields();
       Field algoField;
       for (Field oneField : algoParams) {
         try {
@@ -249,9 +250,9 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
     public InfoGramOutput(InfoGram b) {
       super(b);
       if (glm.equals(b._parms._infogram_algorithm)) {
-        if (binomial.equals(((GLMParameters) b._parms._infogram_algorithm_parameters)._family))
+        if (binomial.equals(((GLMModel.GLMParameters) b._parms._infogram_algorithm_parameters)._family))
           _distribution = bernoulli;
-        else if (multinomial.equals(((GLMParameters) b._parms._infogram_algorithm_parameters)._family))
+        else if (multinomial.equals(((GLMModel.GLMParameters) b._parms._infogram_algorithm_parameters)._family))
           _distribution = multinomial;
       } else {
         _distribution = b._parms._infogram_algorithm_parameters._distribution;
@@ -361,4 +362,3 @@ public class InfoGramModel extends Model<InfoGramModel, InfoGramModel.InfoGramPa
     return super.readAll_impl(ab, fs);
   }
 }
-

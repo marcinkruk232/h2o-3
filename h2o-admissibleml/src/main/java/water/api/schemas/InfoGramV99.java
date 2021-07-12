@@ -1,12 +1,11 @@
-package hex.schemas;
+package water.api.schemas;
 
-import hex.infogram.InfoGram;
-import hex.infogram.InfoGramModel;
+import hex.InfoGram.InfoGram;
+import hex.InfoGram.InfoGramModel;
+import hex.schemas.ModelBuilderSchema;
 import water.api.API;
 import water.api.schemas3.KeyV3;
 import water.api.schemas3.ModelParametersSchemaV3;
-
-import static hex.infogram.InfoGramModel.InfoGramParameter.Algorithm;
 
 public class InfoGramV99 extends ModelBuilderSchema<InfoGram, InfoGramV99, InfoGramV99.INFOGRAMParametersV99> {
   public static final class INFOGRAMParametersV99 extends ModelParametersSchemaV3<InfoGramModel.InfoGramParameter, InfoGramV99.INFOGRAMParametersV99> {
@@ -104,35 +103,35 @@ public class InfoGramV99 extends ModelBuilderSchema<InfoGram, InfoGramV99, InfoG
      *  avoid printing extremely large confusion matrices.  */
     @API(help = "[Deprecated] Maximum size (# classes) for confusion matrices to be printed in the Logs", level = API.Level.secondary, direction = API.Direction.INOUT)
     public int max_confusion_matrix_size;
-    
-    @API(help = "Machine learning algorithm chosen to build the infogram.  AUTO default to GBM", values={"AUTO", 
+
+    @API(help = "Machine learning algorithm chosen to build the infogram.  AUTO default to GBM", values={"AUTO",
             "deeplearning", "drf", "gbm", "glm"}, level = API.Level.expert, direction = API.Direction.INOUT, gridable=true)
-    public Algorithm infogram_algorithm;
-    
-    @API(help = "parameters specified to the chosen algorithm can be passed to infogram using algorithm_params", 
+    public InfoGramModel.InfoGramParameter.Algorithm infogram_algorithm;
+
+    @API(help = "parameters specified to the chosen algorithm can be passed to infogram using algorithm_params",
             level = API.Level.expert, gridable=true)
     public String infogram_algorithm_params;
 
     @API(help = "Machine learning algorithm chosen to build the final model.  AUTO default to GBM", values={"AUTO",
             "deeplearning", "drf", "gbm", "glm"}, level = API.Level.critical, direction = API.Direction.INOUT, gridable=true)
-    public Algorithm model_algorithm;
+    public InfoGramModel.InfoGramParameter.Algorithm model_algorithm;
 
     @API(help = "parameters specified to the chosen final algorithm", level = API.Level.secondary, gridable=true)
     public String model_algorithm_params;
-    
+
     @API(help = "predictors that are to be excluded from model due to them being discriminatory or inappropriate for" +
             " whatever reason.", level = API.Level.secondary, gridable=true)
     public String[] sensitive_attributes;
-    
+
     @API(help = "conditional information threshold between 0 and 1 that is used to decide whether a predictor's " +
             "conditional information is high enough.  Default to 0.1", level = API.Level.secondary, gridable = true)
     public double conditional_info_threshold;
-    
+
     @API(help = "variable importance threshold between 0 and 1 that is used to decide whether a predictor's relevance" +
             " level is high enough.  Default to 0.1", level = API.Level.secondary, gridable = true)
     public double varimp_threshod;
-    
-    @API(help = "fraction of training frame to use to build the infogram model.  Default to 1.0", 
+
+    @API(help = "fraction of training frame to use to build the infogram model.  Default to 1.0",
             level = API.Level.secondary, gridable = true)
     public double data_fraction;
 

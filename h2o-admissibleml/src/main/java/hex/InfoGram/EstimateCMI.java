@@ -1,4 +1,4 @@
-package infogram;
+package hex.InfoGram;
 
 import water.MRTask;
 import water.fvec.Chunk;
@@ -42,4 +42,3 @@ public class EstimateCMI extends MRTask<EstimateCMI> {
     _meanCMI = _accumulatedCMI/_nonZeroRows;
   }
 }
-

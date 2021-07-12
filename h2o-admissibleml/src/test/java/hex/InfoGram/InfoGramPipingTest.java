@@ -1,6 +1,5 @@
-package InfoGram;
+package hex.InfoGram;
 
-import infogram.InfoGramModel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import water.DKV;
@@ -298,3 +297,4 @@ public class InfoGramPipingTest extends TestUtil {
     }
   }
 }
+
