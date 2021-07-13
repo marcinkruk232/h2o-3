@@ -1,4 +1,4 @@
 package water.api;
 
-public class InfoGramHandler {
+public class InfoGramHandler extends Handler{
 }
