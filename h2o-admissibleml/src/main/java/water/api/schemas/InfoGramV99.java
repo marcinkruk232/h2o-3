@@ -148,4 +148,8 @@ public class InfoGramV99 extends ModelBuilderSchema<InfoGram, InfoGramV99, InfoG
             level = API.Level.secondary, gridable = false)
     public int pval;
   }
+
+  @Override public InfoGramV99 fillFromImpl(InfoGram infogram) {
+    return this;
+  }
 }
