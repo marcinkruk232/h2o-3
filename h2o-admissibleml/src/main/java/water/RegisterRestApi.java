@@ -9,7 +9,7 @@ public class RegisterRestApi extends AbstractRegister {
   public void registerEndPoints(RestApiContext context) {
     context.registerEndpoint("infogram_build",
             "POST /99/InfoGramBuilder", InfoGramBuilderHandler.class, "build",
-            "Start an AutoML build process.");
+            "Start to build infogram.");
   }
   
   @Override

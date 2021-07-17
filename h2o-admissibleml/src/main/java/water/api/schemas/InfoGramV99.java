@@ -150,6 +150,7 @@ public class InfoGramV99 extends ModelBuilderSchema<InfoGram, InfoGramV99, InfoG
   }
 
   @Override public InfoGramV99 fillFromImpl(InfoGram infogram) {
+    super.fillFromImpl(infogram, new String[]{});
     return this;
   }
 }
