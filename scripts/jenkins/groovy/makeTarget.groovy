@@ -43,8 +43,10 @@ def call(final pipelineContext, final Closure body) {
       if [ "${config.activatePythonEnv}" = 'true' ]; then
         echo "Activating Python ${env.PYTHON_VERSION}"
         . /envs/h2o_env_python${env.PYTHON_VERSION}/bin/activate
-        # this will also update numpy 
-        pip install causalml==0.10.0
+        if [ \$PYTHON_VERSION != '2.7' ]; then 
+          # this will also update numpy 
+          pip install causalml==0.10.0
+        fi
       fi
       
       echo '########################'
