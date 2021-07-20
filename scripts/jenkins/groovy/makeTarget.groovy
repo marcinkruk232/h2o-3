@@ -45,8 +45,8 @@ def call(final pipelineContext, final Closure body) {
         . /envs/h2o_env_python${env.PYTHON_VERSION}/bin/activate
         if [ \$PYTHON_VERSION != '2.7' ]; then 
           # this will also update numpy 
-          git clone https://github.com/uber/causalml.git
-          cd causalml
+          git clone https://github.com/uber/causalml.git causalml2
+          cd causalml2
           pip install -r requirements.txt
           python setup.py build_ext --inplace
           python setup.py install
