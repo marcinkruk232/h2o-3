@@ -1949,6 +1949,34 @@ public class DRFTest extends TestUtil {
     }
   }
 
+  @Test
+  public void testCategoricalSplitNAvsREST() {
+    Scope.enter();
+    try {
+      Frame f = new TestFrameBuilder()
+              .withColNames("C1", "response")
+              .withVecTypes(Vec.T_CAT, Vec.T_NUM)
+              .withDataForCol(0, new String[]{"A", "B", null, null, null})
+              .withDataForCol(1, new double[]{-0.25, 0.25, 1, 1, 1})
+              .build();
+
+      DRFModel.DRFParameters parms = new DRFModel.DRFParameters();
+      parms._response_column = "response";
+      parms._train = f._key;
+      parms._ntrees = 1;
+      parms._seed = 1234L;
+      parms._max_depth = 1;
+
+      DRFModel model = new DRF(parms).trainModel().get();
+      Scope.track_generic(model);
+
+      SharedTreeSubgraph tree0 = model.getSharedTreeSubgraph(0, 0);
+      System.out.println(tree0);
+    } finally {
+      Scope.exit();
+    }
+  }
+
     @Test public void testMOJOandPOJOSupportedCategoricalEncodings() throws Exception {
         try {
             Scope.enter();
