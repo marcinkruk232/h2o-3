@@ -1954,10 +1954,12 @@ public class DRFTest extends TestUtil {
     Scope.enter();
     try {
       Frame f = new TestFrameBuilder()
-              .withColNames("C1", "response")
-              .withVecTypes(Vec.T_CAT, Vec.T_NUM)
-              .withDataForCol(0, new String[]{"A", "B", null, null, null})
-              .withDataForCol(1, new double[]{-0.25, 0.25, 1, 1, 1})
+              .withColNames("C0", "C1", "response", "weight")
+              .withVecTypes(Vec.T_NUM, Vec.T_CAT, Vec.T_NUM, Vec.T_NUM)
+              .withDataForCol(0, new double[]{0.0, 0.0, 0.0, 0.0, 0.0, -1})
+              .withDataForCol(1, new String[]{"A", "B", null, null, null, null})
+              .withDataForCol(2, new double[]{0.25, -0.25, 1, 1, 1, 10})
+              .withDataForCol(3, new double[]{1, 1, 1, 1, 1, 100})
               .build();
 
       DRFModel.DRFParameters parms = new DRFModel.DRFParameters();
@@ -1965,13 +1967,16 @@ public class DRFTest extends TestUtil {
       parms._train = f._key;
       parms._ntrees = 1;
       parms._seed = 1234L;
-      parms._max_depth = 1;
+      parms._max_depth = 2;
+      parms._sample_rate = 1.0;
+      parms._weights_column = "weight";
 
       DRFModel model = new DRF(parms).trainModel().get();
       Scope.track_generic(model);
 
-      SharedTreeSubgraph tree0 = model.getSharedTreeSubgraph(0, 0);
-      System.out.println(tree0);
+      Frame nodeIds = model.scoreLeafNodeAssignment(
+              f, Model.LeafNodeAssignment.LeafNodeAssignmentType.Node_ID, Key.make());
+      Scope.track(nodeIds);
     } finally {
       Scope.exit();
     }
