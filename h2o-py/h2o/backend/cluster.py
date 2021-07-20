@@ -326,6 +326,7 @@ class H2OCluster(object):
             ('Key<PartialDependence>', 'PartialDependence'),
             ('Key<AutoML>', 'Auto Model'),
             ('Key<ScalaCodeResult>', 'Scala Code Execution'),
+            ('Key<InfoGram>', 'InfoGram'),
             ('Key<KeyedVoid>', 'Void')
         ])
         if type in type_mapping:

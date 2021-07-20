@@ -365,7 +365,7 @@ def gen_init(modules):
     module_strs = []
     # imports estimators
     for full_module, module, clz, category in sorted(modules):
-        if module in ["grid", "automl"]:
+        if module in ["grid", "automl", "infogram"]:
             continue
         module_strs.append('"%s"' % clz)
         yield "from .%s import %s" % (module, clz)
@@ -440,7 +440,8 @@ def main():
     modules = [("h2o.estimators.deeplearning", "deeplearning", "H2OAutoEncoderEstimator", "Unsupervised"),
                ("h2o.estimators.estimator_base", "estimator_base", "H2OEstimator", "Miscellaneous"),
                ("h2o.grid", "grid", "H2OGridSearch", "Miscellaneous"),
-               ("h2o.automl", "automl", "H2OAutoML", "Miscellaneous")]
+               ("h2o.infogram", "infogram", "H2OInfoGram", "Miscellaneous"),
+               ("h2o.automl", "automl", "H2OAutoML" ,"Miscellaneous")]
     builders = bi.model_builders().items()
     algo_to_module = dict(
         drf="random_forest",
