@@ -235,6 +235,8 @@ def endpoints(raw=False):
             if path == "/3/ModelMetrics/models/{model}": continue
             if path == "/3/ModelMetrics": continue
             if "AutoML" in path: continue  # Generation code doesn't know how to deal with defaults for complex objects yet
+            if "InfoGram" in path: continue # no auto generation
+            if "AdmissibleML" in path: continue # no auto generation
             if apiname.endswith("_deprecated"): continue
 
             # Resolve one name conflict

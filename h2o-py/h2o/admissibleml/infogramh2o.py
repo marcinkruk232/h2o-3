@@ -34,14 +34,14 @@ class H2OInfoGram(H2OEstimator, h2o_meta(Keyed)):
                  **kwargs):
         super(H2OInfoGram, self).__init__()
         # Check if H2O jar contains AdmissibleML
-        try:
-            h2o.api("GET /3/Metadata/schemas/InfoGramV99")
-        except h2o.exceptions.H2OResponseError as e:
-            print(e)
-            print("*******************************************************************\n" \
-                  "*Please verify that your H2O jar has the proper AdmissibleML extensions.*\n" \
-                  "*******************************************************************\n" \
-                  "\nVerbose Error Message:")
+        # try:
+        #     h2o.api("GET /3/Metadata/schemas/InfoGramV99")
+        # except h2o.exceptions.H2OResponseError as e:
+        #     print(e)
+        #     print("*******************************************************************\n" \
+        #           "*Please verify that your H2O jar has the proper AdmissibleML extensions.*\n" \
+        #           "*******************************************************************\n" \
+        #           "\nVerbose Error Message:")
         # check for valid parameter settings    
         assert_is_type(model_id, None, str)
         assert_is_type(max_runtime_secs, None, int)
@@ -50,7 +50,7 @@ class H2OInfoGram(H2OEstimator, h2o_meta(Keyed)):
         assert_is_type(infogram_algorithm_params, None, dict)
         assert_is_type(model_algorithm, None, str)
         assert_is_type(sensitive_attributes, None, tuple)
-        if isinstance(sensitive_attributes):
+        if isinstance(sensitive_attributes, tuple):
             for obj in sensitive_attributes:
                 assert_is_type(obj, str)
         assert_is_type(conditional_info_threshold, numeric)
@@ -112,23 +112,32 @@ class H2OInfoGram(H2OEstimator, h2o_meta(Keyed)):
             self.response_column = self.assertValidCol(y, ncols, names)
             parms["response_column"] = self.response_column
             ignored_columns_set.remove(parms["response_column"])
-
+        
+        xset = set()
         if x is not None:
             assert_is_type(x, list)
-            xset = set()
             for xi in x:
                 xname = self.assertValidCol(xi, ncols, names)
                 if xname in ignored_columns:
                     raise H2OValueError("Predictor x and ignored_columns cannot be specified simultaneously")
                 xset.add(xname)
                 ignored_columns_set.remove(self.assertValidCol(xi, ncols, names))
+        else: # x is not specified, use all predictors exclude response, weight/offset columns
+            xset = set(self.training_frame.names)
+            xset.remove(parms["response_column"])
+            for xi in xset:
+                if xi in ignored_columns_set:
+                    ignored_columns_set.remove(xi)
+                
         if offset_column is not None:
             parms["offset_column"] = self.assertValidCol(offset_column, ncols, names)
             ignored_columns_set.remove(parms["offset_column"])
+            
         if weights_column is not None:
             parms["weights_column"] = self.assertValidCol(weights_column, ncols, names)
             ignored_columns_set.remove(parms["weights_column"])
-        ignored_columns_set.remove(ignored_columns)
+        for ignored in ignored_columns:
+            ignored_columns_set.add(ignored)
         parms['ignored_columns'] = ignored_columns_set
 
         resp = self._build_resp = h2o.api('POST /99/InfogramBuilder', json=parms)

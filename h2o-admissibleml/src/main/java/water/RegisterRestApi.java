@@ -14,6 +14,6 @@ public class RegisterRestApi extends AbstractRegister {
   
   @Override
   public String getName() {
-    return "AdmissibleML";
+    return "InfoGram";
   }
 }

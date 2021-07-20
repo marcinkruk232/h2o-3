@@ -147,6 +147,47 @@ public class InfoGramV99 extends ModelBuilderSchema<InfoGram, InfoGramV99, InfoG
     @API(help = "If true will calculate the p-value. Default to false",
             level = API.Level.secondary, gridable = false)
     public int pval;
+    
+    // fill in parameter values from parms
+/*    public INFOGRAMParametersV99 fillFromImpl(Properties parms) {
+      Map<String, Field> fields = new HashMap<>();  // copy properties into HashMap
+      Field[] schema_fields = this.getClass().getDeclaredFields();
+      Field current = null;
+      Class thisSchemaClass = this.getClass();
+      try {
+        Class clz = this.getClass();
+        do {
+          for (Field f : schema_fields) {
+            current = f;
+            if (null == fields.get(f.getName()))
+              fields.put(f.getName(), f);
+          }
+          clz = clz.getSuperclass();
+        } while (Iced.class.isAssignableFrom(clz.getSuperclass()));
+      } catch (SecurityException e) {
+        throw H2O.fail("Exception accessing field: "+current+" in class: "+this.getClass()+": "+e);
+      }
+      // add the assignment part
+      for (String key : parms.stringPropertyNames()) {
+        Field f = fields.get(key);
+        if (null == f) 
+          throw new H2OIllegalArgumentException("Unknown parameter: "+key, "Unknown parameter in fillFromParms: "+key);
+        int mods = f.getModifiers();
+        if (Modifier.isTransient(mods) || Modifier.isStatic(mods)) 
+          throw new H2OIllegalArgumentException("Bad parameter for field: "+key, "Bad parameter definition for field: " +
+                  ""+key+".  Field was declared static or transient");
+        Annotation[] apis = f.getAnnotations();
+        API api = (API)apis[0];
+        if (api.direction() == API.Direction.OUTPUT) 
+          throw new H2OIllegalArgumentException("Attempting to set output field: "+key);
+        try {
+          setField(this, f, key, parms.getProperty(key), api.required(), thisSchemaClass);
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
+        }
+      }
+      return this;
+    }*/
   }
 
   @Override public InfoGramV99 fillFromImpl(InfoGram infogram) {

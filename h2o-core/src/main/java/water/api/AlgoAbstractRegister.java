@@ -63,7 +63,6 @@ public abstract class AlgoAbstractRegister extends AbstractRegister {
         "resume",
         "Resume grid search for " + base + " model."
     );
-
   }
 
 }

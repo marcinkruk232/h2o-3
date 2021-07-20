@@ -1,10 +1,12 @@
 package water.api;
 
+import hex.InfoGram.InfoGram;
 import hex.Model;
 import hex.ModelBuilder;
 import water.Job;
 import water.Key;
 import water.api.schemas.InfoGramV99;
+import water.util.HttpResponseStatus;
 import water.util.Log;
 
 import java.util.Properties;
@@ -32,9 +34,16 @@ public class InfoGramBuilderHandler extends Handler {
               " is now "+model_id+".";
       Log.warn("model_id", warningStr);
     }
-    Key<Model> key = model_id==null ? ModelBuilder.defaultKey("InfoGram") : Key.make(model_id);
-    Job job = warningStr!=null ? new Job<>(key, ModelBuilder.javaName("InfoGram"), "infogram", warningStr) :
-            new Job<>(key, ModelBuilder.javaName("infogram"),"InfoGram");
+    String algoName = "InfoGram";
+    String algoURLName = "infogram";
+    Key<Model> key = model_id==null ? ModelBuilder.defaultKey(algoName) : Key.make(model_id);
+    Job job = warningStr!=null ? new Job<>(key, ModelBuilder.javaName(algoURLName), algoName, warningStr) :
+            new Job<>(key, ModelBuilder.javaName(algoURLName),algoName);
+    InfoGram builder = (InfoGram) new InfoGram(true).clone();
+    builder._job = job;
+    builder.init(false);
+    infoSchema.setHttpStatus(HttpResponseStatus.OK.getCode());
+    infoSchema.job.fillFromImpl(builder.trainModelOnH2ONode());
     return infoSchema;
   }
   
