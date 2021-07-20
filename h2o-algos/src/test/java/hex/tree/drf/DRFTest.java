@@ -1955,13 +1955,15 @@ public class DRFTest extends TestUtil {
     try {
       Frame f = new TestFrameBuilder()
               .withColNames("C0", "C1", "response", "weight")
-              .withVecTypes(Vec.T_NUM, Vec.T_CAT, Vec.T_NUM, Vec.T_NUM)
-              .withDataForCol(0, new double[]{0.0, 0.0, 0.0, 0.0, 0.0, -1})
+              .withVecTypes(Vec.T_CAT, Vec.T_CAT, Vec.T_NUM, Vec.T_NUM)
+              .withDataForCol(0, new String[]{"0", "0", "0", "0", "0", "1"})
               .withDataForCol(1, new String[]{"A", "B", null, null, null, null})
               .withDataForCol(2, new double[]{0.25, -0.25, 1, 1, 1, 10})
               .withDataForCol(3, new double[]{1, 1, 1, 1, 1, 100})
               .build();
 
+      System.out.println(f.toTwoDimTable(0, (int) f.numRows(), false));
+      
       DRFModel.DRFParameters parms = new DRFModel.DRFParameters();
       parms._response_column = "response";
       parms._train = f._key;
@@ -1970,13 +1972,36 @@ public class DRFTest extends TestUtil {
       parms._max_depth = 2;
       parms._sample_rate = 1.0;
       parms._weights_column = "weight";
+      parms._mtries = 2;
 
       DRFModel model = new DRF(parms).trainModel().get();
       Scope.track_generic(model);
 
+      Map<Integer, Integer> obsCounts = new HashMap<>();
+      
       Frame nodeIds = model.scoreLeafNodeAssignment(
               f, Model.LeafNodeAssignment.LeafNodeAssignmentType.Node_ID, Key.make());
+      nodeIds.add(f);
+      System.out.println(nodeIds.toTwoDimTable(0, (int) f.numRows(), false));
       Scope.track(nodeIds);
+      for (int i = 0; i < nodeIds.numRows(); i++) {
+          int nodeId = (int) nodeIds.vec(0).at(i);
+          if (!obsCounts.containsKey(nodeId)) {
+              obsCounts.put(nodeId, 0);
+          }
+          obsCounts.put(nodeId, obsCounts.get(nodeId) + 1);
+      }
+      
+      SharedTreeSubgraph tree0 = model.getSharedTreeSubgraph(0, 0);
+      assertTrue(tree0.nodesArray.stream().anyMatch(SharedTreeNode::isNaVsRest));
+      for (SharedTreeNode n : tree0.nodesArray) {
+          if (n.isLeaf()) {
+              int weight = (int) n.getWeight();
+              if (weight == 100)
+                  weight = 1;
+              assertEquals((int) obsCounts.get(n.getNodeNumber()), weight);
+          }
+      }
     } finally {
       Scope.exit();
     }
