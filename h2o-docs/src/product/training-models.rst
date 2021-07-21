@@ -62,7 +62,7 @@ This example uses only the AGE, RACE, VOL, and GLEASON columns to make the predi
     prostate_glm <- h2o.glm(family = "binomial", 
                             x = predictors, 
                             y = response, 
-                            training_frame = df, 
+                            training_frame = train, 
                             lambda = 0, 
                             compute_p_values = TRUE)
 
@@ -106,7 +106,7 @@ This example uses only the AGE, RACE, VOL, and GLEASON columns to make the predi
     glm_model = H2OGeneralizedLinearEstimator(family= "binomial", 
                                               lambda_ = 0, 
                                               compute_p_values = True)
-    glm_model.train(predictors, response_col, training_frame= prostate)
+    glm_model.train(predictors, response_col, training_frame= train)
 
     # predict using the model and the testing dataset
     predict = glm_model.predict(test)
