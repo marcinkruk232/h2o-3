@@ -703,7 +703,7 @@ public class DTree extends Iced {
 
       // NA handling correction
       res++; //1 byte for NA split dir
-      if (_split._nasplit == DHistogram.NASplitDir.NAvsREST)
+      if (_split._nasplit == DHistogram.NASplitDir.NAvsREST) // FIXME
         res -= _split._equal == 3 ? 6 + _split._bs.numBytes() : 4; //don't need certain stuff
 
       Node left = _tree.node(_nids[0]);
